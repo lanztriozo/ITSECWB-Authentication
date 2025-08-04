@@ -5,6 +5,8 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
 import javax.swing.WindowConstants;
+//New Import
+import javax.swing.JOptionPane;
 
 public class Frame extends javax.swing.JFrame {
 
@@ -180,23 +182,39 @@ public class Frame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void adminBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_adminBtnActionPerformed
-        adminHomePnl.showPnl("home");
-        contentView.show(Content, "adminHomePnl");
+        if (currentUserRole == 5) {
+            adminHomePnl.showPnl("home");
+            contentView.show(Content, "adminHomePnl");
+        } else {
+            JOptionPane.showMessageDialog(this, "Access denied. Insufficient privileges.", "Access Denied", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_adminBtnActionPerformed
 
     private void managerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_managerBtnActionPerformed
-        managerHomePnl.showPnl("home");
-        contentView.show(Content, "managerHomePnl");
+        if (currentUserRole == 4) {
+            managerHomePnl.showPnl("home");
+            contentView.show(Content, "managerHomePnl");
+        } else {
+            JOptionPane.showMessageDialog(this, "Access denied. Insufficient privileges.", "Access Denied", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_managerBtnActionPerformed
 
     private void staffBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_staffBtnActionPerformed
-        staffHomePnl.showPnl("home");
-        contentView.show(Content, "staffHomePnl");
+        if (currentUserRole == 3) {
+            staffHomePnl.showPnl("home");
+            contentView.show(Content, "staffHomePnl");
+        } else {
+            JOptionPane.showMessageDialog(this, "Access denied. Insufficient privileges.", "Access Denied", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_staffBtnActionPerformed
 
     private void clientBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clientBtnActionPerformed
-        clientHomePnl.showPnl("home");
-        contentView.show(Content, "clientHomePnl");
+        if (currentUserRole == 2) {
+            clientHomePnl.showPnl("home");
+            contentView.show(Content, "clientHomePnl");
+        } else {
+            JOptionPane.showMessageDialog(this, "Access denied. Insufficient privileges.", "Access Denied", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_clientBtnActionPerformed
 
     private void logoutBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutBtnActionPerformed
@@ -214,6 +232,10 @@ public class Frame extends javax.swing.JFrame {
     
     private CardLayout contentView = new CardLayout();
     private CardLayout frameView = new CardLayout();
+    
+        // Track current logged-in user's role
+    private int currentUserRole = -1;
+    private String currentUsername = "";
     
     public void init(Main controller){
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -258,6 +280,60 @@ public class Frame extends javax.swing.JFrame {
     
     public void registerAction(String username, String password, String confpass){
         main.sqlite.addUser(username, password);
+    }
+    public void navigateToRoleHome(int userRole) {
+        this.currentUserRole = userRole;
+        
+        // Hide all navigation buttons first
+        hideAllNavigationButtons();
+        
+        // Show main navigation panel
+        frameView.show(Container, "homePnl");
+        
+        // Show appropriate home panel and navigation button based on role
+        switch (userRole) {
+            case 5: // Administrator
+                adminBtn.setVisible(true);
+                adminHomePnl.showPnl("home");
+                contentView.show(Content, "adminHomePnl");
+                break;
+            case 4: // Manager
+                managerBtn.setVisible(true);
+                managerHomePnl.showPnl("home");
+                contentView.show(Content, "managerHomePnl");
+                break;
+            case 3: // Staff
+                staffBtn.setVisible(true);
+                staffHomePnl.showPnl("home");
+                contentView.show(Content, "staffHomePnl");
+                break;
+            case 2: // Client
+                clientBtn.setVisible(true);
+                clientHomePnl.showPnl("home");
+                contentView.show(Content, "clientHomePnl");
+                break;
+            case 1: // Disabled/Locked
+                JOptionPane.showMessageDialog(this, "Account is disabled. Please contact administrator.", "Account Disabled", JOptionPane.ERROR_MESSAGE);
+                logout();
+                break;
+            default:
+                JOptionPane.showMessageDialog(this, "Invalid user role.", "Error", JOptionPane.ERROR_MESSAGE);
+                logout();
+                break;
+        }
+    }
+    private void hideAllNavigationButtons() {
+        adminBtn.setVisible(false);
+        managerBtn.setVisible(false);
+        staffBtn.setVisible(false);
+        clientBtn.setVisible(false);
+    }
+    
+    public void logout() {
+        currentUserRole = -1;
+        currentUsername = "";
+        hideAllNavigationButtons();
+        frameView.show(Container, "loginPnl");
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

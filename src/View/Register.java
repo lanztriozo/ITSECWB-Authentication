@@ -1,6 +1,8 @@
 
 package View;
 
+import javax.swing.JOptionPane;
+
 public class Register extends javax.swing.JPanel {
 
     public Frame frame;
@@ -97,7 +99,52 @@ public class Register extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void registerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registerBtnActionPerformed
-        frame.registerAction(usernameFld.getText(), passwordFld.getText(), confpassFld.getText());
+        String username = usernameFld.getText().trim();
+        String password = passwordFld.getText();
+        String confirmPassword = confpassFld.getText();
+        
+        // Input validation
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required.", "Registration Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Username validation
+        if (username.length() < 3) {
+            JOptionPane.showMessageDialog(this, "Username must be at least 3 characters long.", "Registration Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Password validation
+        if (password.length() < 8) {
+            JOptionPane.showMessageDialog(this, "Password must be at least 8 characters long.", "Registration Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Password confirmation check
+        if (!password.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match.", "Registration Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Additional password strength checks
+        if (!isPasswordStrong(password)) {
+            JOptionPane.showMessageDialog(this, 
+                "Password must contain at least:\n" +
+                "- One uppercase letter\n" +
+                "- One lowercase letter\n" +
+                "- One digit\n" +
+                "- One special character (!@#$%^&*)", 
+                "Weak Password", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Clear sensitive data from memory
+        passwordFld.setText("");
+        confpassFld.setText("");
+        
+        // Proceed with registration
+        frame.registerAction(username, password, confirmPassword);
         frame.loginNav();
     }//GEN-LAST:event_registerBtnActionPerformed
 
@@ -105,6 +152,23 @@ public class Register extends javax.swing.JPanel {
         frame.loginNav();
     }//GEN-LAST:event_backBtnActionPerformed
 
+    
+    private boolean isPasswordStrong(String password) {
+        boolean hasUpper = false;
+        boolean hasLower = false;
+        boolean hasDigit = false;
+        boolean hasSpecial = false;
+        String specialChars = "!@#$%^&*";
+        
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c)) hasUpper = true;
+            else if (Character.isLowerCase(c)) hasLower = true;
+            else if (Character.isDigit(c)) hasDigit = true;
+            else if (specialChars.contains(String.valueOf(c))) hasSpecial = true;
+        }
+        
+        return hasUpper && hasLower && hasDigit && hasSpecial;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backBtn;

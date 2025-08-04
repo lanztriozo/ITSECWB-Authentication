@@ -10,6 +10,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+//New Import
+import java.sql.PreparedStatement;
 
 public class SQLite {
     
@@ -316,5 +318,56 @@ public class SQLite {
             System.out.print(ex);
         }
         return product;
+    }
+    
+    // Security-related methods
+    public int incrementFailedAttempts(String username) {
+        String sql = "UPDATE users SET failed_attempts = failed_attempts + 1 WHERE username = ?";
+        int currentAttempts = 0;
+        
+        try (Connection conn = DriverManager.getConnection(driverURL);
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            pstmt.executeUpdate();
+            
+            // Get current failed attempts count
+            String selectSql = "SELECT failed_attempts FROM users WHERE username = ?";
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                selectStmt.setString(1, username);
+                ResultSet rs = selectStmt.executeQuery();
+                if (rs.next()) {
+                    currentAttempts = rs.getInt("failed_attempts");
+                }
+            }
+        } catch (Exception ex) {
+            System.out.print(ex);
+        }
+        
+        return currentAttempts;
+    }
+    
+    public void resetFailedAttempts(String username) {
+        String sql = "UPDATE users SET failed_attempts = 0 WHERE username = ?";
+        
+        try (Connection conn = DriverManager.getConnection(driverURL);
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            pstmt.executeUpdate();
+        } catch (Exception ex) {
+            System.out.print(ex);
+        }
+    }
+    
+    public void lockAccount(String username) {
+        String sql = "UPDATE users SET locked = 1, role = 1 WHERE username = ?";
+        
+        try (Connection conn = DriverManager.getConnection(driverURL);
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            pstmt.executeUpdate();
+            System.out.println("Account " + username + " has been locked.");
+        } catch (Exception ex) {
+            System.out.print(ex);
+        }
     }
 }

@@ -1,6 +1,11 @@
 
 package View;
 
+import Model.User;
+import java.util.ArrayList;
+import javax.swing.JOptionPane;
+
+
 public class Login extends javax.swing.JPanel {
 
     public Frame frame;
@@ -15,7 +20,7 @@ public class Login extends javax.swing.JPanel {
 
         jLabel1 = new javax.swing.JLabel();
         usernameFld = new javax.swing.JTextField();
-        passwordFld = new javax.swing.JTextField();
+        passwordFld = new javax.swing.JPasswordField();
         registerBtn = new javax.swing.JButton();
         loginBtn = new javax.swing.JButton();
 
@@ -83,13 +88,88 @@ public class Login extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
     private void loginBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginBtnActionPerformed
-        frame.mainNav();
+        String username = usernameFld.getText();
+        String password = passwordFld.getText();
+        
+        // Input validation
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter both username and password.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Authenticate user
+        User authenticatedUser = authenticateUser(username, password);
+        
+        if (authenticatedUser != null) {
+            // Check if account is locked
+            if (authenticatedUser.getLocked() == 1) {
+                JOptionPane.showMessageDialog(this, "Account is locked. Please contact administrator.", "Account Locked", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Reset failed attempts on successful login
+            frame.main.sqlite.resetFailedAttempts(username);
+            
+            // Clear form
+            clearForm();
+            
+            // Navigate based on role
+            frame.navigateToRoleHome(authenticatedUser.getRole());
+        } else {
+            // Handle failed login
+            handleFailedLogin(username);
+        }
     }//GEN-LAST:event_loginBtnActionPerformed
 
     private void registerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registerBtnActionPerformed
         frame.registerNav();
     }//GEN-LAST:event_registerBtnActionPerformed
 
+    private User authenticateUser(String username, String password) {
+        ArrayList<User> users = frame.main.sqlite.getUsers();
+        
+        for (User user : users) {
+            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
+                return user;
+            }
+        }
+        return null;
+    }
+    
+    private void handleFailedLogin(String username) {
+        // Check if user exists
+        ArrayList<User> users = frame.main.sqlite.getUsers();
+        boolean userExists = false;
+        
+        for (User user : users) {
+            if (user.getUsername().equals(username)) {
+                userExists = true;
+                break;
+            }
+        }
+        
+        if (userExists) {
+            int failedAttempts = frame.main.sqlite.incrementFailedAttempts(username);
+            
+            if (failedAttempts >= 3) {
+                frame.main.sqlite.lockAccount(username);
+                JOptionPane.showMessageDialog(this, "Account has been locked due to too many failed login attempts.", "Account Locked", JOptionPane.ERROR_MESSAGE);
+            } else {
+                int attemptsLeft = 3 - failedAttempts;
+                JOptionPane.showMessageDialog(this, "Invalid credentials. " + attemptsLeft + " attempts remaining.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Invalid credentials.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        // Clear password field for security
+        passwordFld.setText("");
+    }
+    
+    private void clearForm() {
+        usernameFld.setText("");
+        passwordFld.setText("");
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
